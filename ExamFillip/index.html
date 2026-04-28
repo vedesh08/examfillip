@@ -5,179 +5,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamFillip : Stay Tuned!</title>
 	<link rel="icon" href="static/logo.png">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&display=swap');
+   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0a0a0c;
-            color: #ffffff;
-            height: 100vh;
-            display: flex;
-            flex-direction: column; /* Added to push footer to bottom */
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #0a0a0c;
+        color: #ffffff;
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden; /* Keeps everything locked in place */
+        position: relative;
+    }
 
-        /* Fancy Morphing Background Loop */
-        .visual-loop {
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(45deg, #0052D4, #4361ee, #f48220);
-            filter: blur(80px);
-            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-            animation: morph 8s linear infinite;
-            opacity: 0.15;
-            z-index: -1;
-        }
+    /* Fancy Morphing Background Loop */
+    .visual-loop {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); /* Centers the blur properly */
+        width: 500px;
+        height: 500px;
+        background: linear-gradient(45deg, #0052D4, #4361ee, #f48220);
+        filter: blur(80px);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        animation: morph 8s linear infinite;
+        opacity: 0.15;
+        z-index: -1;
+        pointer-events: none; /* Prevents interaction issues */
+    }
 
-        .container {
-            text-align: center;
-            padding: 2rem;
-            max-width: 700px;
-            flex: 1; /* Takes up space so footer stays at bottom */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+    .container {
+        text-align: center;
+        padding: 2rem;
+        max-width: 700px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
 
-        .logo-box {
-            margin-bottom: 0.25rem;
-            animation: fadeInDown 1s ease-out;
-        }
+    .logo-box {
+        margin-bottom: 0.25rem;
+        animation: fadeInDown 1s ease-out;
+    }
 
-        .logo-box img {
-            max-width: 320px;
-            height: auto;
-            filter: drop-shadow(0 0 15px rgba(244, 130, 32, 0.2));
-        }
+    .logo-box img {
+        max-width: 320px;
+        height: auto;
+        filter: drop-shadow(0 0 15px rgba(244, 130, 32, 0.2));
+    }
 
-        .status-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 100px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 1.5rem;
-            color: #f48220;
-            animation: pulse 2s infinite;
-        }
+    .status-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 100px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 1.5rem;
+        color: #f48220;
+        animation: pulse 2s infinite;
+    }
 
-        h1 {
-            font-size: clamp(1.8rem, 5vw, 3rem);
-            font-weight: 800;
-            margin-bottom: 1rem;
-            background: linear-gradient(to bottom, #fff 40%, #999);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    h1 {
+        font-size: clamp(1.8rem, 5vw, 3rem);
+        font-weight: 800;
+        margin-bottom: 1rem;
+        background: linear-gradient(to bottom, #fff 40%, #999);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 
-        p {
-            font-size: 1.1rem;
-            color: #a1a1aa;
-            line-height: 1.6;
-            margin-bottom: 2.5rem;
-            font-weight: 300;
-        }
+    p {
+        font-size: 1.1rem;
+        color: #a1a1aa;
+        line-height: 1.6;
+        margin-bottom: 2.5rem;
+        font-weight: 300;
+    }
 
-        .loader-wrapper {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 2.5rem;
-        }
+    .loader-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 2.5rem;
+    }
 
-        .dot {
-            width: 12px;
-            height: 12px;
-            background: #f48220;
-            border-radius: 50%;
-            animation: dotFly 1.5s infinite ease-in-out;
-        }
+    .dot {
+        width: 12px;
+        height: 12px;
+        background: #f48220;
+        border-radius: 50%;
+        animation: dotFly 1.5s infinite ease-in-out;
+    }
 
-        .dot:nth-child(2) { animation-delay: 0.2s; background: #4361ee; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; background: #4361ee; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
 
-        .slogan {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #ffffff;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            opacity: 0.6;
-            line-height: 1.8;
-        }
+    .slogan {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #ffffff;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        opacity: 0.6;
+        line-height: 1.8;
+    }
 
-        /* Footer Style */
-        footer {
-            width: 100%;
-            padding: 20px;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #55555e;
-            letter-spacing: 1px;
-            z-index: 10;
-		}
+    footer {
+        width: 100%;
+        padding: 20px;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #55555e;
+        letter-spacing: 1px;
+        z-index: 10;
+    }
 
-        @keyframes morph {
-            0% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(0deg); }
-            50% { border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%; }
-            100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: rotate(360deg); }
-        }
+    @keyframes morph {
+        0% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: translate(-50%, -50%) rotate(0deg); }
+        50% { border-radius: 50% 50% 20% 80% / 25% 80% 20% 75%; }
+        100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: translate(-50%, -50%) rotate(360deg); }
+    }
 
-        @keyframes dotFly {
-            0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-            50% { transform: translateY(-20px) scale(1.5); opacity: 1; filter: blur(1px); }
-        }
+    @keyframes dotFly {
+        0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+        50% { transform: translateY(-20px) scale(1.5); opacity: 1; filter: blur(1px); }
+    }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(244, 130, 32, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(244, 130, 32, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(244, 130, 32, 0); }
-        }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(244, 130, 32, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(244, 130, 32, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(244, 130, 32, 0); }
+    }
 
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-        @media (max-width: 480px) {
-            .visual-loop { width: 300px; height: 300px; }
-            h1 { font-size: 1.8rem; }
-            p { font-size: 1rem; }
-        }
-		 /* Smooth Scrolling */
-		html {
-  scroll-behavior: smooth;
-}
-		.scroll-container {
-  overflow-y: scroll;
-  scroll-behavior: smooth;
-  /* Smooth momentum scrolling for older mobile browsers */
-  -webkit-overflow-scrolling: touch; 
-}
-		@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-}
-		html, body {
-  height: 100%;
-  overflow-y: auto; /* Force scrollbar if content exceeds height */
-}
-    </style>
+    @media (max-width: 480px) {
+        .visual-loop { width: 300px; height: 300px; }
+        h1 { font-size: 1.8rem; }
+        p { font-size: 1rem; }
+    }
+</style>
 </head>
 <body>
     <div class="visual-loop"></div>
