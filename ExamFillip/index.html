@@ -106,23 +106,39 @@ p {
 }
 
 .loader-wrapper {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 2.5rem;
+    position: relative;
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 2.5rem auto;
 }
 
 .dot {
+    position: absolute;
     width: 12px;
     height: 12px;
-    background: #f48220;
     border-radius: 50%;
-    animation: dotFly 1.5s infinite ease-in-out;
+
+    background: linear-gradient(135deg, #f48220, #4361ee);
+    box-shadow: 0 0 12px rgba(244, 130, 32, 0.5);
+
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-.dot:nth-child(2) { animation-delay: 0.2s; background: #4361ee; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-
+/* Each dot has its own "random" path */
+.dot:nth-child(1) {
+    animation: chaos1 2.4s ease-in-out infinite;
+}
+.dot:nth-child(2) {
+    animation: chaos2 2.4s ease-in-out infinite;
+}
+.dot:nth-child(3) {
+    animation: chaos3 2.4s ease-in-out infinite;
+}
+.dot:nth-child(4) {
+    animation: chaos4 2.4s ease-in-out infinite;
+}
 .slogan {
     font-size: 0.9rem;
     font-weight: 500;
@@ -204,6 +220,37 @@ footer {
         font-size: 1rem;
     }
 }
+@keyframes chaos1 {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+    25%  { transform: translate(-50%, -50%) translate(25px, -20px) scale(1.3); }
+    50%  { transform: translate(-50%, -50%) translate(-20px, -25px) scale(0.8); }
+    75%  { transform: translate(-50%, -50%) translate(-25px, 20px) scale(1.2); }
+    100% { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+}
+
+@keyframes chaos2 {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+    25%  { transform: translate(-50%, -50%) translate(-25px, -15px) scale(1.2); }
+    50%  { transform: translate(-50%, -50%) translate(-10px, 25px) scale(0.9); }
+    75%  { transform: translate(-50%, -50%) translate(25px, 15px) scale(1.3); }
+    100% { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+}
+
+@keyframes chaos3 {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+    25%  { transform: translate(-50%, -50%) translate(20px, 25px) scale(1.1); }
+    50%  { transform: translate(-50%, -50%) translate(25px, -10px) scale(1.3); }
+    75%  { transform: translate(-50%, -50%) translate(-20px, -20px) scale(0.8); }
+    100% { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+}
+
+@keyframes chaos4 {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+    25%  { transform: translate(-50%, -50%) translate(-20px, 20px) scale(1.25); }
+    50%  { transform: translate(-50%, -50%) translate(20px, 20px) scale(0.85); }
+    75%  { transform: translate(-50%, -50%) translate(15px, -25px) scale(1.2); }
+    100% { transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+}
 </style>
 </head>
 
@@ -226,10 +273,11 @@ footer {
     </p>
 
     <div class="loader-wrapper">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-    </div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</div>
 
     <div class="slogan">
         Your Catalyst for Competitive Exams<br>Coming Soon
