@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamFillip Test Data Extractor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #818cf8;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.4);
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-bg-hover: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --border-light: #475569;
+            --shadow: rgba(0, 0, 0, 0.4);
+            --gradient: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #c084fc 100%);
+            --glass: rgba(30, 41, 59, 0.8);
+            --input-bg: #0f172a;
+            --success-bg: rgba(16, 185, 129, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --card-bg-hover: #f8fafc;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-light: #cbd5e1;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --glass: rgba(255, 255, 255, 0.9);
+            --input-bg: #f8fafc;
+            --success-bg: rgba(16, 185, 129, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(192, 132, 252, 0.06) 0%, transparent 50%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow:
+                0 25px 50px -12px var(--shadow),
+                0 0 0 1px var(--border);
+            border: 1px solid var(--border);
+            animation: fadeSlideUp 0.6s ease-out;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            animation: fadeSlideUp 0.6s ease-out 0.1s both;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .theme-toggle {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .theme-toggle .thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: var(--gradient);
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        [data-theme="light"] .theme-toggle .thumb {
+            transform: translateX(28px);
+        }
+
+        .theme-toggle .icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .section {
+            background: var(--input-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            animation: fadeSlideUp 0.6s ease-out 0.2s both;
+        }
+
+        .section:hover {
+            border-color: var(--border-light);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        .section:hover label {
+            color: var(--primary-light);
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            margin-right: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .marking-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .type-card {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .type-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+        }
+
+        .type-card span {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .inputs div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .inputs small {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="number"] {
+            width: 50px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            transform: scale(1.05);
+        }
+
+        button {
+            width: 100%;
+            padding: 1.1rem 2rem;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+            animation: fadeSlideUp 0.6s ease-out 0.3s both;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: left 0.5s ease;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow:
+                0 15px 35px rgba(99, 102, 241, 0.4),
+                0 0 0 1px var(--primary-light);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        button.loading {
+            pointer-events: none;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        button.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            padding: 1rem;
+            border-radius: 12px;
+            display: none;
+            animation: fadeSlideUp 0.4s ease-out;
+            font-weight: 500;
+        }
+
+        .success {
+            background: var(--success-bg);
+            color: var(--accent);
+            display: block !important;
+            border: 1px solid var(--accent);
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(0.95); opacity: 0; }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .file-drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .file-drop-zone:hover, .file-drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .file-drop-zone .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .file-drop-zone .text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .file-drop-zone.loaded {
+            border-color: var(--accent);
+            border-style: solid;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .file-drop-zone.loaded .text {
+            color: var(--accent);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        footer:hover {
+            color: var(--text);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .marking-grid {
+                grid-template-columns: 1fr;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>ExamFillip Test Data Extractor</h2>
+        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+            <div class="icons">
+                <span>☀️</span>
+                <span>🌙</span>
+            </div>
+            <div class="thumb">✨</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <label>Select Workspace Folder</label>
+        <div class="file-drop-zone" id="folderDropZone" onclick="document.getElementById('folderInput').click()">
+            <span class="icon">📁</span>
+            <span class="text" id="folderText">Click to select folder containing images</span>
+        </div>
+        <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none">
+
+        <label style="margin-top: 1.5rem;">Answer Key (.txt)</label>
+        <div class="file-drop-zone" id="ansDropZone" onclick="document.getElementById('ansInput').click()">
+            <span class="icon">📄</span>
+            <span class="text" id="ansText">Click to select answer key file</span>
+        </div>
+        <input type="file" id="ansInput" accept=".txt" style="display: none">
+    </div>
+
+    <div class="section">
+        <label>Configure Marking Scheme</label>
+        <div class="marking-grid">
+            <div class="type-card">
+                <span>SCQ</span>
+                <div class="inputs">
+                    <div><input type="number" id="scqPos" value="4"><small>Pos</small></div>
+                    <div><input type="number" id="scqNeg" value="1"><small>Neg</small></div>
+                </div>
+            </div>
+            <div class="type-card">
+                <span>MCQ</span>
+                <div class="inputs">
+                    <div><input type="number" id="mcqPos" value="4"><small>Pos</small></div>
+                    <div><input type="number" id="mcqNeg" value="2"><small>Neg</small></div>
+                </div>
+            </div>
+            <div class="type-card">
+                <span>NUM</span>
+                <div class="inputs">
+                    <div><input type="number" id="numPos" value="4"><small>Pos</small></div>
+                    <div><input type="number" id="numNeg" value="0"><small>Neg</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="compileBtn" onclick="generateJSON()">⚡ Extract Test Data in .json file</button>
+    <div id="status"></div>
+</div>
+
+<footer>
+    <p>&copy; 2026 ExamFillip. All rights reserved. | Test Data Extractor V1.1</p>
+</footer>
+
+<script>
+    // Theme toggle
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // File input handlers
+    const folderInput = document.getElementById('folderInput');
+    const ansInput = document.getElementById('ansInput');
+    const folderDropZone = document.getElementById('folderDropZone');
+    const ansDropZone = document.getElementById('ansDropZone');
+    const folderText = document.getElementById('folderText');
+    const ansText = document.getElementById('ansText');
+
+    folderInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            folderDropZone.classList.add('loaded');
+            folderText.textContent = `✓ ${this.files.length} files selected`;
+        }
+    });
+
+    ansInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            ansDropZone.classList.add('loaded');
+            ansText.textContent = `✓ ${this.files[0].name}`;
+        }
+    });
+
+    // Drag and drop
+    folderDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        folderDropZone.classList.add('dragover');
+    });
+
+    folderDropZone.addEventListener('dragleave', () => {
+        folderDropZone.classList.remove('dragover');
+    });
+
+    ansDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        ansDropZone.classList.add('dragover');
+    });
+
+    ansDropZone.addEventListener('dragleave', () => {
+        ansDropZone.classList.remove('dragover');
+    });
+
+    async function generateJSON() {
+        const folderFiles = folderInput.files;
+        const ansFile = ansInput.files[0];
+        const status = document.getElementById('status');
+        const btn = document.getElementById('compileBtn');
+
+        const marks = {
+            SCQ: { pos: parseInt(document.getElementById('scqPos').value), neg: parseInt(document.getElementById('scqNeg').value) },
+            MCQ: { pos: parseInt(document.getElementById('mcqPos').value), neg: parseInt(document.getElementById('mcqNeg').value) },
+            NUM: { pos: parseInt(document.getElementById('numPos').value), neg: parseInt(document.getElementById('numNeg').value) }
+        };
+
+        if (folderFiles.length === 0 || !ansFile) {
+            animateShake(btn);
+            alert("Bhai, files toh select karle pehle! 😂");
+            return;
+        }
+
+        // Show loading state
+        btn.classList.add('loading');
+        btn.textContent = 'Compiling...';
+
+        let masterData = {};
+        let foundImages = {};
+
+        for (let file of folderFiles) {
+            if (file.webkitRelativePath.endsWith('.png')) {
+                const pathParts = file.webkitRelativePath.split('/');
+                const fileName = pathParts[pathParts.length - 1];
+                const qid = fileName.replace('.png', '');
+
+                const qType = pathParts[pathParts.length - 2] || "SCQ";
+                const difficulty = pathParts[pathParts.length - 3] || "M";
+                const subject = pathParts[pathParts.length - 4] || "Physics";
+                const exam = pathParts[pathParts.length - 5] || "JM";
+
+                foundImages[qid] = {
+                    path: file.webkitRelativePath,
+                    exam, subject, difficulty, qType
+                };
+            }
+        }
+
+        const text = await ansFile.text();
+        const lines = text.split('\n');
+
+        lines.forEach(line => {
+            const match = line.match(/([A-Za-z0-9]{8})\s*-\s*(\d+)/);
+            if (match) {
+                let qid = match[1];
+                let ans = match[2];
+
+                if (foundImages[qid]) {
+                    const type = foundImages[qid].qType;
+                    const markingScheme = marks[type] || { pos: 4, neg: 1 };
+
+                    masterData[qid] = {
+                        qid: qid,
+                        image: foundImages[qid].path,
+                        answer: ans,
+                        exam: foundImages[qid].exam,
+                        subject: foundImages[qid].subject,
+                        difficulty: foundImages[qid].difficulty,
+                        type: type,
+                        marking: {
+                            positive: markingScheme.pos,
+                            negative: markingScheme.neg * -1
+                        }
+                    };
+                }
+            }
+        });
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(masterData, null, 4));
+        const dlNode = document.createElement('a');
+        dlNode.setAttribute("href", dataStr);
+        dlNode.setAttribute("download", "master_db.json");
+        document.body.appendChild(dlNode);
+        dlNode.click();
+        dlNode.remove();
+
+        // Reset button
+        btn.classList.remove('loading');
+        btn.textContent = '⚡ Compile Master Database';
+
+        status.className = "success";
+        status.innerHTML = `✨ Success! ${Object.keys(masterData).length} Questions Compiled into master_db.json`;
+    }
+
+    function animateShake(element) {
+        element.style.animation = 'none';
+        element.offsetHeight;
+        element.style.animation = 'shake 0.5s ease';
+    }
+
+    // Add shake animation dynamically
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+
+</body>
+</html>

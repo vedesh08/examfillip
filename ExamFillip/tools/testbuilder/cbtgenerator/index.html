@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Test Builder & Portal Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --jee-blue: #285c95;
+            --jee-light-blue: #337ab7;
+            --jee-silver: #f1f1f1;
+            --not-visited: #fff;
+            --not-answered: #ff4d4d;
+            --answered: #22c55e;
+            --marked: #8b5cf6;
+        }
+
+        body { font-family: Arial, Helvetica, sans-serif; background: #e5e7eb; }
+
+        /* JEE Palette Shape Definitions - TCS iON Style */
+        .q-btn {
+            width: 38px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; cursor: pointer;
+            margin: 4px; position: relative; border: 1px solid #ccc; background: #fff;
+            transition: none; color: #444;
+        }
+
+        /* Not Answered - Red Trapezoid (Slightly slanted top) */
+        .q-not-answered {
+            background-color: #ef4444 !important; color: white !important; border: none !important;
+            clip-path: polygon(15% 0%, 85% 0%, 100% 40%, 100% 100%, 0% 100%, 0% 40%);
+            border-radius: 2px;
+        }
+
+        /* Answered - Green Trapezoid (Slightly slanted bottom) */
+        .q-answered {
+            background-color: #22c55e !important; color: white !important; border: none !important;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 60%, 85% 100%, 15% 100%, 0% 60%);
+            border-radius: 2px;
+        }
+
+        /* Marked - Purple Circle */
+        .q-marked {
+            background-color: #8b5cf6 !important; color: white !important; border-radius: 50% !important; border: none !important;
+        }
+
+        /* Marked & Answered - Purple Circle with Green Dot */
+        .q-marked-answered {
+            background-color: #8b5cf6 !important; color: white !important; border-radius: 50% !important; border: none !important;
+        }
+        .q-marked-answered::after {
+            content: '✓'; position: absolute; bottom: -2px; right: -2px;
+            width: 14px; height: 14px; background: #22c55e; color: white;
+            font-size: 9px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            border: 1px solid white;
+        }
+
+        .active-q { border: 2px solid #1e3a8a !important; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 10; }
+
+        /* Subject Slab Navigation */
+        .subject-slab {
+            padding: 8px 20px; cursor: pointer; border: 1px solid #ccc;
+            background: #fff; color: #285c95; font-weight: bold; font-size: 13px;
+            text-transform: uppercase; margin-right: 2px; border-bottom: none;
+        }
+        .subject-slab.active { background: #337ab7; color: #fff; border-color: #337ab7; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* JEE Layout Headers */
+        .jee-header-strip { background: #285c95; height: 45px; }
+        .jee-sub-header { background: #fff; border-bottom: 1px solid #ddd; height: 40px; }
+        
+        .jee-btn-blue { background: #337ab7; color: white; }
+        .jee-btn-white { background: #fff; border: 1px solid #ccc; color: #333; }
+        
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+<div id="admin-panel" class="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-100">
+    <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl overflow-hidden border border-gray-300">
+        <div class="bg-[#285c95] p-5 text-white flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">CBT EXAM BUILDER</h1>
+                <p class="text-xs opacity-80">Generate Standalone JEE-Style Portals</p>
+            </div>
+            <i class="fas fa-file-code text-3xl opacity-30"></i>
+        </div>
+
+        <div class="p-8 space-y-6">
+            <div id="upload-zone" class="border-2 border-dashed border-gray-300 p-12 text-center rounded-lg hover:border-[#285c95] hover:bg-blue-50 transition-all cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" class="hidden" accept=".json" onchange="processJSON(this)">
+                <i class="fas fa-upload text-4xl text-gray-400 mb-4"></i>
+                <h2 class="text-lg font-bold text-gray-600">Upload Question Bank (JSON)</h2>
+                <p class="text-xs text-gray-400 mt-2">The system will scan for SCQ, MCQ, and NUM types</p>
+            </div>
+
+            <div id="admin-controls" class="hidden space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Exam Name</label>
+                        <input type="text" id="test-name" value="JEE Advanced 2024" class="w-full p-2 border rounded font-bold text-gray-700">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Duration (Minutes)</label>
+                        <input type="number" id="test-duration" value="180" class="w-full p-2 border rounded font-bold text-gray-700">
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border rounded p-4">
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase mb-3">Content Analysis</h3>
+                    <div id="scan-results" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <!-- Stats injected -->
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button onclick="exportStandalone()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded hover:bg-emerald-700 shadow">GENERATE STANDALONE HTML</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p class="text-[11px] text-gray-450 mt-4 text-center">&copy; 2026 ExamFillip. All rights reserved. | CBT Generator V1.1</p>
+</div>
+
+<div id="instruction-view" class="hidden h-screen bg-[#f5f5f5] flex items-start justify-center p-6 overflow-y-auto">
+    <div class="bg-white w-full max-w-3xl rounded-lg shadow-xl overflow-hidden border border-gray-300 my-8">
+        <div class="bg-[#285c95] p-6 text-white text-center">
+            <div class="bg-white/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-file-pen text-xl"></i></div>
+            <h1 class="text-2xl font-bold tracking-tight" id="inst-test-name">Examination</h1>
+            <p class="text-sm opacity-80 mt-1" id="inst-meta">Loading exam information...</p>
+        </div>
+        <div class="p-8 space-y-6">
+            <div>
+                <h2 class="text-sm font-bold text-gray-600 uppercase border-b pb-2 mb-3">Exam Structure</h2>
+                <div id="inst-subjects" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-600 uppercase border-b pb-2 mb-3">Marking Scheme</h2>
+                <div id="inst-marking" class="text-sm space-y-1 bg-gray-50 p-4 rounded-lg border"></div>
+            </div>
+            <div>
+                <h2 class="text-sm font-bold text-gray-600 uppercase border-b pb-2 mb-3">General Instructions</h2>
+                <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                    <li>Read each question carefully before selecting your answer.</li>
+                    <li>Use the <span class="font-bold">question palette</span> on the right to track answered, not-answered, and marked questions.</li>
+                    <li>Navigate between subjects using the <span class="font-bold">subject slabs</span> at the top.</li>
+                    <li>Click <span class="font-bold">"Mark for Review & Next"</span> to flag a question you want to revisit.</li>
+                    <li>Answers can be changed anytime before final submission.</li>
+                    <li>Once submitted, you <span class="font-bold text-red-600">cannot</span> modify your responses.</li>
+                    <li>The exam auto-submits when the timer reaches zero.</li>
+                </ul>
+            </div>
+            <button onclick="startExam()" class="w-full bg-[#337ab7] text-white font-bold py-4 rounded-lg text-lg hover:bg-[#285c95] shadow-lg transition-all hover:shadow-xl">I am ready to begin</button>
+        </div>
+    </div>
+</div>
+
+<div id="portal-view" class="hidden fixed inset-0 bg-[#f1f1f1] flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="jee-header-strip text-white flex justify-between items-center px-4 shrink-0 shadow-sm z-50">
+        <div class="flex items-center gap-4">
+            <div class="bg-white text-[#285c95] font-black px-2 py-0.5 rounded-sm text-xs italic">JEE</div>
+            <h2 id="portal-title" class="font-bold text-sm tracking-wide uppercase"></h2>
+        </div>
+        <div class="flex items-center h-full">
+            <div class="px-6 border-r border-white/20 h-full flex flex-col justify-center text-center">
+                <span class="text-[8px] font-bold opacity-80 uppercase leading-none">Time Left</span>
+                <span id="timer" class="font-mono text-lg font-bold">00:00:00</span>
+            </div>
+            <div class="flex items-center gap-3 pl-6">
+                <div class="text-right">
+                    <p class="text-[9px] font-bold opacity-70">Candidate Name</p>
+                    <p class="text-xs font-bold uppercase" id="cand-name">Candidate_2024</p>
+                </div>
+                <div class="w-9 h-9 bg-white/10 rounded flex items-center justify-center border border-white/20">
+                    <i class="fas fa-user text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Subject Tabs -->
+    <nav id="slab-nav" class="bg-[#ddd] border-b flex px-4 pt-2 shrink-0">
+        <!-- Subjects injected here -->
+    </nav>
+
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Question Section -->
+        <section class="flex-1 flex flex-col bg-white border-r">
+            <div class="jee-sub-header flex items-center justify-between px-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <span id="curr-subject-label" class="text-xs font-bold text-gray-600">PHYSICS</span>
+                    <i class="fas fa-angle-right text-gray-300 text-xs"></i>
+                    <span id="curr-type-badge" class="text-xs font-bold text-[#285c95]">SECTION: SCQ</span>
+                </div>
+                <div class="flex gap-4">
+                    <div class="text-[11px]"><span class="text-gray-400 font-bold uppercase mr-1">Correct Marks:</span><span id="p-marks" class="text-green-600 font-bold">4</span></div>
+                    <div class="text-[11px]"><span class="text-gray-400 font-bold uppercase mr-1">Negative Marks:</span><span id="n-marks" class="text-red-600 font-bold">-1</span></div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div class="max-w-4xl">
+                    <div class="border-b border-gray-200 pb-2 mb-6">
+                        <h3 id="q-num-label" class="text-lg font-bold text-[#333]">Question No. 1</h3>
+                    </div>
+
+                    <div id="question-display" class="mb-10">
+                        <div id="q-image-container" class="hidden mb-6 border border-gray-200 p-1 inline-block bg-white shadow-sm">
+                            <img id="q-image" src="" alt="Question" class="max-w-full">
+                        </div>
+                        <div id="q-text" class="text-[15px] leading-relaxed text-[#333] whitespace-pre-wrap"></div>
+                    </div>
+
+                    <div id="options-grid" class="space-y-3">
+                        <!-- Options injected -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <footer class="h-14 bg-gray-100 border-t flex items-center justify-between px-4 shrink-0">
+                <div class="flex gap-2">
+                    <button onclick="markReview()" class="h-9 px-4 bg-white border border-gray-300 text-xs font-bold hover:bg-gray-50">Mark for Review & Next</button>
+                    <button onclick="clearResponse()" class="h-9 px-4 bg-white border border-gray-300 text-xs font-bold hover:bg-gray-50">Clear Response</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="moveQ(-1)" class="h-9 px-6 bg-white border border-gray-300 text-xs font-bold">Back</button>
+                    <button onclick="saveNext()" class="h-9 px-8 bg-[#337ab7] text-white text-xs font-bold hover:bg-[#285c95] shadow-md">Save & Next</button>
+                </div>
+            </footer>
+        </section>
+
+        <!-- Right Palette Sidebar -->
+        <aside class="w-72 bg-white flex flex-col shrink-0">
+            <div id="palette-box" class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <!-- Grouped palette -->
+            </div>
+            
+            <div class="p-4 border-t bg-gray-50">
+                <div class="grid grid-cols-2 gap-y-2 mb-4">
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="q-btn q-answered scale-[0.65] m-0"></div> <span id="count-answered">Answered (0)</span></div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="q-btn q-not-answered scale-[0.65] m-0"></div> <span id="count-not-answered">Not Answered (0)</span></div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="q-btn scale-[0.65] m-0"></div> <span id="count-unvisited">Not Visited (0)</span></div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="q-btn q-marked scale-[0.65] m-0"></div> <span id="count-marked">Marked for Review (0)</span></div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold col-span-2"><div class="q-btn q-marked-answered scale-[0.65] m-0"></div> <span id="count-marked-answered">Answered & Marked (0)</span></div>
+                </div>
+                <button onclick="triggerSubmit()" class="w-full bg-[#337ab7] py-2.5 text-white font-bold text-sm hover:bg-[#285c95]">Submit</button>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<div id="report-view" class="hidden min-h-screen bg-[#f5f5f5] p-6 overflow-y-auto">
+    <div class="max-w-4xl mx-auto bg-white border shadow rounded">
+        <div class="bg-[#285c95] p-6 text-center text-white">
+            <h1 class="text-xl font-bold">EXAM PERFORMANCE CARD</h1>
+            <p id="report-test-name" class="text-xs opacity-75 mt-1"></p>
+        </div>
+        
+        <div class="p-8 grid grid-cols-4 gap-4 text-center border-b">
+            <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Total Score</p><h2 id="res-score" class="text-3xl font-bold text-[#285c95]">0</h2></div>
+            <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Correct</p><h2 id="res-corr" class="text-3xl font-bold text-green-600">0</h2></div>
+            <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Incorrect</p><h2 id="res-inc" class="text-3xl font-bold text-red-600">0</h2></div>
+            <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Accuracy</p><h2 id="res-acc" class="text-3xl font-bold text-gray-700">0%</h2></div>
+        </div>
+
+        <div class="p-6">
+            <table class="w-full text-left border text-xs">
+                <thead class="bg-gray-100 font-bold text-gray-600">
+                    <tr>
+                        <th class="p-3 border">Subject</th>
+                        <th class="p-3 border text-center">Total Questions</th>
+                        <th class="p-3 border text-center">Attempted</th>
+                        <th class="p-3 border text-center">Correct</th>
+                        <th class="p-3 border text-center">Section Marks</th>
+                    </tr>
+                </thead>
+                <tbody id="report-table"></tbody>
+            </table>
+        </div>
+
+        <div class="p-6 bg-gray-50 flex flex-wrap justify-center gap-3">
+            <button onclick="resetExam()" class="px-8 py-2 bg-red-600 text-white font-bold text-sm hover:bg-red-700">RESET</button>
+            <button onclick="showAnalysis()" class="px-8 py-2 bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700">VIEW ANALYSIS</button>
+            <button onclick="showSolutions()" class="px-8 py-2 bg-amber-600 text-white font-bold text-sm hover:bg-amber-700">VIEW SOLUTIONS</button>
+            <button onclick="downloadResults()" class="px-8 py-2 bg-[#337ab7] text-white font-bold text-sm">SAVE DATA</button>
+        </div>
+    </div>
+</div>
+
+<div id="analysis-view" class="hidden h-screen bg-[#f5f5f5] p-6 overflow-y-auto">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white border shadow rounded mb-6">
+            <div class="bg-[#285c95] p-6 text-center text-white">
+                <h1 class="text-xl font-bold">DETAILED ANALYSIS REPORT</h1>
+                <p id="analysis-test-name" class="text-xs opacity-75 mt-1"></p>
+            </div>
+            
+            <div class="p-8 grid grid-cols-4 gap-4 text-center border-b">
+                <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Total Score</p><h2 id="an-score" class="text-3xl font-bold text-[#285c95]">0</h2></div>
+                <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Correct</p><h2 id="an-corr" class="text-3xl font-bold text-green-600">0</h2></div>
+                <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Incorrect</p><h2 id="an-inc" class="text-3xl font-bold text-red-600">0</h2></div>
+                <div><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Accuracy</p><h2 id="an-acc" class="text-3xl font-bold text-gray-700">0%</h2></div>
+            </div>
+        </div>
+
+        <div class="bg-white border shadow rounded mb-6 p-6">
+            <h2 class="text-sm font-bold text-gray-600 uppercase border-b pb-2 mb-4">Subject-wise Performance</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border text-xs">
+                    <thead class="bg-gray-100 font-bold text-gray-600">
+                        <tr>
+                            <th class="p-3 border">Subject</th>
+                            <th class="p-3 border text-center">Total</th>
+                            <th class="p-3 border text-center">Attempted</th>
+                            <th class="p-3 border text-center">Correct</th>
+                            <th class="p-3 border text-center">Incorrect</th>
+                            <th class="p-3 border text-center">Unattempted</th>
+                            <th class="p-3 border text-center">Score</th>
+                            <th class="p-3 border text-center">Accuracy</th>
+                            <th class="p-3 border text-center w-40">Bar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysis-sub-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white border shadow rounded mb-6 p-6">
+            <h2 class="text-sm font-bold text-gray-600 uppercase border-b pb-2 mb-4">Question-wise Analysis</h2>
+            <div class="max-h-[400px] custom-scrollbar" style="overflow:auto">
+                <table class="w-full text-left border text-xs">
+                    <thead class="bg-gray-100 font-bold text-gray-600 sticky top-0">
+                        <tr>
+                            <th class="p-2 border text-center">#</th>
+                            <th class="p-2 border">Subject</th>
+                            <th class="p-2 border">Type</th>
+                            <th class="p-2 border">Your Answer</th>
+                            <th class="p-2 border">Correct Answer</th>
+                            <th class="p-2 border text-center">Status</th>
+                            <th class="p-2 border text-center">Marks</th>
+                            <th class="p-2 border text-center">Time (s)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysis-q-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-4 pb-8">
+            <button onclick="resetExam()" class="px-8 py-3 bg-red-600 text-white font-bold text-sm shadow hover:bg-red-700 rounded">RESET</button>
+            <button onclick="showSolutions()" class="px-8 py-3 bg-emerald-600 text-white font-bold text-sm shadow hover:bg-emerald-700 rounded">VIEW SOLUTIONS</button>
+            <button onclick="downloadResults()" class="px-8 py-3 bg-[#337ab7] text-white font-bold text-sm shadow hover:bg-[#285c95] rounded">SAVE DATA</button>
+        </div>
+    </div>
+</div>
+
+<div id="solutions-view" class="hidden fixed inset-0 bg-[#f1f1f1] flex flex-col overflow-hidden">
+    <header class="jee-header-strip text-white flex justify-between items-center px-4 shrink-0 shadow-sm z-50">
+        <div class="flex items-center gap-4">
+            <div class="bg-amber-400 text-[#285c95] font-black px-2 py-0.5 rounded-sm text-xs italic">SOL</div>
+            <h2 id="sol-title" class="font-bold text-sm tracking-wide uppercase"></h2>
+        </div>
+        <div class="flex items-center h-full">
+            <div class="px-6 border-r border-white/20 h-full flex flex-col justify-center text-center">
+                <span class="text-[8px] font-bold opacity-80 uppercase leading-none">Mode</span>
+                <span class="font-bold text-amber-300 text-sm">SOLUTION MODE</span>
+            </div>
+            <div class="flex items-center gap-3 pl-6">
+                <div class="text-right">
+                    <p class="text-[9px] font-bold opacity-70">Status</p>
+                    <p class="text-xs font-bold uppercase" id="sol-score-display">Score: 0</p>
+                </div>
+                <div class="w-9 h-9 bg-amber-400/20 rounded flex items-center justify-center border border-amber-400/30">
+                    <i class="fas fa-check-circle text-amber-300 text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav id="sol-slab-nav" class="bg-[#ddd] border-b flex px-4 pt-2 shrink-0"></nav>
+
+    <main class="flex-1 flex overflow-hidden">
+        <section class="flex-1 flex flex-col bg-white border-r">
+            <div class="jee-sub-header flex items-center justify-between px-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <span id="sol-subject-label" class="text-xs font-bold text-gray-600">PHYSICS</span>
+                    <i class="fas fa-angle-right text-gray-300 text-xs"></i>
+                    <span id="sol-type-badge" class="text-xs font-bold text-[#285c95]">SECTION: SCQ</span>
+                </div>
+                <div class="flex gap-4">
+                    <div class="text-[11px]"><span class="text-gray-400 font-bold uppercase mr-1">Result:</span><span id="sol-result-badge" class="font-bold text-green-600">● Correct</span></div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div class="max-w-4xl">
+                    <div class="border-b border-gray-200 pb-2 mb-6">
+                        <h3 id="sol-q-num" class="text-lg font-bold text-[#333]">Question No. 1</h3>
+                    </div>
+
+                    <div id="sol-question-display" class="mb-10">
+                        <div id="sol-image-container" class="hidden mb-6 border border-gray-200 p-1 inline-block bg-white shadow-sm">
+                            <img id="sol-image" src="" alt="Question" class="max-w-full">
+                        </div>
+                        <div id="sol-text" class="text-[15px] leading-relaxed text-[#333] whitespace-pre-wrap"></div>
+                    </div>
+
+                    <div id="sol-options-grid" class="space-y-3"></div>
+
+                    <div id="sol-marks-bar" class="mt-6 p-4 border rounded-lg bg-gray-50 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs font-bold text-gray-500 uppercase">Marks Awarded:</span>
+                            <span id="sol-marks-awarded" class="text-lg font-black text-green-600">+4</span>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-gray-500 uppercase mr-2">Time Taken:</span>
+                            <span id="sol-time-taken" class="text-sm font-bold text-gray-700">0s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="h-14 bg-gray-100 border-t flex items-center justify-between px-4 shrink-0">
+                <div class="flex gap-2">
+                    <button onclick="solMoveQ(-1)" class="h-9 px-6 bg-white border border-gray-300 text-xs font-bold">← Back</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="resetExam()" class="h-9 px-3 bg-red-600 text-white text-xs font-bold rounded">RESET</button>
+                    <button onclick="showAnalysis()" class="h-9 px-4 bg-gray-700 text-white text-xs font-bold rounded">← Back to Report</button>
+                    <button onclick="solMoveQ(1)" class="h-9 px-6 bg-[#337ab7] text-white text-xs font-bold shadow-md">Next →</button>
+                </div>
+            </footer>
+        </section>
+
+        <aside class="w-72 bg-white flex flex-col shrink-0">
+            <div class="p-3 bg-amber-50 border-b">
+                <h4 class="text-[10px] font-black text-amber-700 uppercase text-center">SOLUTION NAVIGATION</h4>
+            </div>
+            <div id="sol-palette-box" class="flex-1 overflow-y-auto p-4 custom-scrollbar"></div>
+            <div class="p-4 border-t bg-gray-50">
+                <div class="grid grid-cols-2 gap-y-2 mb-4">
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="w-3 h-3 rounded-sm bg-green-500"></div> <span id="sol-count-correct">Correct (0)</span></div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="w-3 h-3 rounded-sm bg-red-500"></div> <span id="sol-count-incorrect">Incorrect (0)</span></div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold"><div class="w-3 h-3 rounded-sm bg-gray-300"></div> <span id="sol-count-unattempted">Unattempted (0)</span></div>
+                </div>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<div id="submit-modal" class="fixed inset-0 bg-black/50 hidden z-[100] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm p-6 shadow-2xl border-t-4 border-[#285c95]">
+        <h3 class="text-lg font-bold mb-2">Final Submission</h3>
+        <p class="text-sm text-gray-600 mb-6">Are you sure you want to submit the examination? You will not be able to change your responses after this.</p>
+        <div class="flex gap-2">
+            <button onclick="closeModal('submit-modal')" class="flex-1 py-2 font-bold text-gray-500 border">Cancel</button>
+            <button onclick="evalExam()" class="flex-1 py-2 bg-[#337ab7] text-white font-bold">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+
+<div id="export-modal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center p-6">
+    <div class="bg-white w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl rounded overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+            <h3 class="font-bold text-gray-700 uppercase text-sm">Standalone Portal Code</h3>
+            <button onclick="closeModal('export-modal')" class="text-2xl text-gray-400">&times;</button>
+        </div>
+        <div class="p-6 flex-1 flex flex-col">
+            <textarea id="export-code-box" readonly class="flex-1 w-full bg-slate-900 text-green-400 p-4 font-mono text-xs rounded border-none focus:ring-0"></textarea>
+            <button onclick="copyCode()" class="mt-4 bg-[#337ab7] text-white py-3 font-bold shadow-lg">COPY SOURCE CODE</button>
+        </div>
+    </div>
+</div>
+<script>
+    let allQ = [];
+    let subjects = [];
+    let curIdx = 0;
+    let activeSub = "";
+    let timeRem = 0;
+    let timerInt;
+    let userResponses = {}; // qid -> { ans: val, status: str }
+    let questionStartTime = Date.now();
+    let timePerQuestion = {}; // qid -> seconds spent
+    let examDuration = 0;
+
+    function processJSON(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                // Support both Map-like and Array structures
+                allQ = Array.isArray(data) ? data : Object.values(data);
+                if (!allQ.length) throw "Empty JSON";
+                
+                analyzeData();
+                document.getElementById('upload-zone').classList.add('hidden');
+                document.getElementById('admin-controls').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                alert("Error: File is not a valid JSON question bank.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function analyzeData() {
+        subjects = [...new Set(allQ.map(q => q.subject))];
+        const stats = {};
+        subjects.forEach(s => stats[s] = { SCQ: 0, MCQ: 0, NUM: 0, marks: 0 });
+
+        allQ.forEach(q => {
+            stats[q.subject][q.type]++;
+            stats[q.subject].marks += q.marking.positive;
+            userResponses[q.qid] = { ans: null, status: 'unvisited' };
+            timePerQuestion[q.qid] = 0;
+        });
+
+        const grid = document.getElementById('scan-results');
+        grid.innerHTML = '';
+        subjects.forEach(s => {
+            const div = document.createElement('div');
+            div.className = "p-2 bg-white border rounded text-[10px] font-bold";
+            div.innerHTML = `<p class="text-blue-800 border-b pb-1 mb-1">${s}</p>
+                <div class="flex justify-between">
+                    <span>${stats[s].SCQ} SCQ | ${stats[s].MCQ} MCQ | ${stats[s].NUM} NUM</span>
+                    <span class="text-emerald-600">${stats[s].marks} MARKS</span>
+                </div>`;
+            grid.appendChild(div);
+        });
+    }
+
+    function runTimer() {
+        timerInt = setInterval(() => {
+            timeRem--;
+            if (timeRem <= 0) evalExam();
+            const h = Math.floor(timeRem / 3600).toString().padStart(2, '0');
+            const m = Math.floor((timeRem % 3600) / 60).toString().padStart(2, '0');
+            const s = (timeRem % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${h}:${m}:${s}`;
+        }, 1000);
+    }
+
+    function buildSlabs() {
+        const nav = document.getElementById('slab-nav');
+        nav.innerHTML = '';
+        subjects.forEach(s => {
+            const div = document.createElement('div');
+            div.className = `subject-slab ${s === activeSub ? 'active' : ''}`;
+            div.innerText = s;
+            div.onclick = () => {
+                activeSub = s;
+                buildSlabs();
+                loadQ(allQ.findIndex(q => q.subject === s));
+            };
+            nav.appendChild(div);
+        });
+    }
+
+    function loadQ(idx) {
+        const prevQ = allQ[curIdx];
+        if (prevQ && timePerQuestion[prevQ.qid] === undefined) {
+            timePerQuestion[prevQ.qid] = (Date.now() - questionStartTime) / 1000;
+        }
+        curIdx = idx;
+        const q = allQ[idx];
+        if (userResponses[q.qid].status === 'unvisited') userResponses[q.qid].status = 'not-answered';
+        questionStartTime = Date.now();
+
+        document.getElementById('q-num-label').innerText = `Question No. ${idx + 1}`;
+        document.getElementById('curr-subject-label').innerText = q.subject;
+        document.getElementById('curr-type-badge').innerText = `SECTION: ${q.type}`;
+        document.getElementById('p-marks').innerText = q.marking.positive;
+        document.getElementById('n-marks').innerText = q.marking.negative;
+
+        const imgCont = document.getElementById('q-image-container');
+        if (q.image) {
+            document.getElementById('q-image').src = q.image;
+            imgCont.classList.remove('hidden');
+        } else {
+            imgCont.classList.add('hidden');
+        }
+        document.getElementById('q-text').innerText = q.text || "Solve the following problem and select the correct option.";
+
+        renderOptions();
+        renderPalette();
+    }
+
+    function renderOptions() {
+        const q = allQ[curIdx];
+        const cont = document.getElementById('options-grid');
+        cont.innerHTML = '';
+        const saved = userResponses[q.qid].ans;
+
+        if (q.type === 'NUM') {
+            const div = document.createElement('div');
+            div.className = "bg-gray-50 p-6 border rounded-lg";
+            div.innerHTML = `
+                <p class="text-xs font-bold text-gray-500 uppercase mb-4">Enter Numerical Answer:</p>
+                <input type="number" step="any" value="${saved || ''}" class="p-3 text-xl font-bold border-2 border-gray-300 rounded focus:border-blue-500 outline-none w-48" oninput="userResponses['${q.qid}'].ans = this.value">
+            `;
+            cont.appendChild(div);
+        } else {
+            [1, 2, 3, 4].forEach(v => {
+                const isSel = q.type === 'SCQ' ? (saved == v) : (Array.isArray(saved) && saved.includes(v.toString()));
+                const btn = document.createElement('div');
+                btn.className = `flex items-center gap-4 p-3 border rounded cursor-pointer ${isSel ? 'bg-blue-50 border-blue-400' : 'bg-white border-gray-200 hover:border-gray-400'}`;
+                btn.innerHTML = `
+                    <div class="w-5 h-5 flex items-center justify-center border-2 ${q.type === 'MCQ' ? 'rounded-sm' : 'rounded-full'} ${isSel ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}">
+                        ${isSel ? '<i class="fas fa-check text-white text-[10px]"></i>' : ''}
+                    </div>
+                    <span class="text-sm font-bold text-gray-700">Option ${v}</span>
+                `;
+                btn.onclick = () => {
+                    if (q.type === 'SCQ') {
+                        userResponses[q.qid].ans = v.toString();
+                    } else {
+                        let current = Array.isArray(userResponses[q.qid].ans) ? userResponses[q.qid].ans : [];
+                        if (current.includes(v.toString())) current = current.filter(x => x !== v.toString());
+                        else current.push(v.toString());
+                        userResponses[q.qid].ans = current.length ? current : null;
+                    }
+                    renderOptions();
+                };
+                cont.appendChild(btn);
+            });
+        }
+    }
+
+    function updateStatusCounts() {
+        const counts = { answered: 0, 'not-answered': 0, unvisited: 0, marked: 0, 'marked-answered': 0 };
+
+        Object.values(userResponses).forEach(r => {
+            if (r.status === 'answered') counts.answered++;
+            else if (r.status === 'not-answered') counts['not-answered']++;
+            else if (r.status === 'unvisited') counts.unvisited++;
+            else if (r.status === 'marked') counts.marked++;
+            else if (r.status === 'marked-answered') counts['marked-answered']++;
+        });
+
+        document.getElementById('count-answered').innerText = `Answered (${counts.answered})`;
+        document.getElementById('count-not-answered').innerText = `Not Answered (${counts['not-answered']})`;
+        document.getElementById('count-unvisited').innerText = `Not Visited (${counts.unvisited})`;
+        document.getElementById('count-marked').innerText = `Marked for Review (${counts.marked})`;
+        document.getElementById('count-marked-answered').innerText = `Answered & Marked (${counts['marked-answered']})`;
+    }
+
+    function renderPalette() {
+        const box = document.getElementById('palette-box');
+        box.innerHTML = '';
+
+        updateStatusCounts();
+
+        const subQs = allQ.map((q, i) => ({...q, globalIdx: i})).filter(q => q.subject === activeSub);
+        ['SCQ', 'MCQ', 'NUM'].forEach(t => {
+            const list = subQs.filter(q => q.type === t);
+            if (!list.length) return;
+
+            const wrap = document.createElement('div');
+            wrap.className = "mb-4";
+            wrap.innerHTML = `<h4 class="text-[9px] font-bold text-gray-400 border-b pb-1 mb-2 uppercase">${t} Section</h4>`;
+            const grid = document.createElement('div');
+            grid.className = "flex flex-wrap";
+            
+            list.forEach(q => {
+                const r = userResponses[q.qid];
+                let statusClass = '';
+                if (r.status === 'answered') statusClass = 'q-answered';
+                else if (r.status === 'marked') statusClass = 'q-marked';
+                else if (r.status === 'marked-answered') statusClass = 'q-marked-answered';
+                else if (r.status === 'not-answered') statusClass = 'q-not-answered';
+
+                const btn = document.createElement('div');
+                btn.className = `q-btn ${statusClass} ${q.globalIdx === curIdx ? 'active-q' : ''}`;
+                btn.innerText = q.globalIdx + 1;
+                btn.onclick = () => loadQ(q.globalIdx);
+                grid.appendChild(btn);
+            });
+            wrap.appendChild(grid);
+            box.appendChild(wrap);
+        });
+    }
+
+    function saveNext() {
+        const q = allQ[curIdx];
+        if (userResponses[q.qid].ans !== null && userResponses[q.qid].ans !== '') userResponses[q.qid].status = 'answered';
+        else userResponses[q.qid].status = 'not-answered';
+        
+        if (curIdx < allQ.length - 1) loadQ(curIdx + 1);
+        else renderPalette();
+    }
+
+    function markReview() {
+        const q = allQ[curIdx];
+        if (userResponses[q.qid].ans !== null && userResponses[q.qid].ans !== '') userResponses[q.qid].status = 'marked-answered';
+        else userResponses[q.qid].status = 'marked';
+
+        if (curIdx < allQ.length - 1) loadQ(curIdx + 1);
+        else renderPalette();
+    }
+
+    function clearResponse() {
+        userResponses[allQ[curIdx].qid].ans = null;
+        userResponses[allQ[curIdx].qid].status = 'not-answered';
+        renderOptions();
+        renderPalette();
+    }
+
+    function moveQ(step) {
+        const target = curIdx + step;
+        if (target >= 0 && target < allQ.length) loadQ(target);
+    }
+
+    function triggerSubmit() { document.getElementById('submit-modal').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function evalExam() {
+        clearInterval(timerInt);
+        closeModal('submit-modal');
+
+        const lastQ = allQ[curIdx];
+        if (lastQ && timePerQuestion[lastQ.qid] !== undefined) {
+            timePerQuestion[lastQ.qid] += (Date.now() - questionStartTime) / 1000;
+        }
+
+        const summary = { totalScore: 0, correct: 0, incorrect: 0, unattempted: 0, subWise: {} };
+        subjects.forEach(s => summary.subWise[s] = { count: 0, att: 0, corr: 0, score: 0 });
+
+        const questionData = {};
+
+        allQ.forEach(q => {
+            const user = userResponses[q.qid];
+            const correctKeys = q.answer.toString().split(',').map(k => k.trim());
+            summary.subWise[q.subject].count++;
+
+            let points = 0;
+            let isCorrect = false;
+            let attempted = (user.ans !== null && user.ans !== '');
+
+            if (attempted) {
+                summary.subWise[q.subject].att++;
+
+                if (q.type === 'SCQ' || q.type === 'NUM') {
+                    if (user.ans.toString().trim() === q.answer.toString().trim()) {
+                        points = q.marking.positive;
+                        isCorrect = true;
+                        summary.correct++;
+                        summary.subWise[q.subject].corr++;
+                    } else {
+                        points = q.marking.negative;
+                        summary.incorrect++;
+                    }
+                } else if (q.type === 'MCQ') {
+                    const selArr = Array.isArray(user.ans) ? user.ans : [user.ans];
+                    const hasWrong = selArr.some(o => !correctKeys.includes(o));
+
+                    if (hasWrong) {
+                        points = q.marking.negative;
+                        summary.incorrect++;
+                    } else {
+                        if (selArr.length === correctKeys.length) {
+                            points = q.marking.positive;
+                            isCorrect = true;
+                            summary.correct++;
+                            summary.subWise[q.subject].corr++;
+                        } else {
+                            points = selArr.length;
+                        }
+                    }
+                }
+                summary.totalScore += points;
+                summary.subWise[q.subject].score += points;
+            } else {
+                summary.unattempted++;
+            }
+
+            questionData[q.qid] = {
+                question: q,
+                userResponse: user.ans,
+                status: user.status,
+                timeTaken: Math.round(timePerQuestion[q.qid] || 0),
+                marksAwarded: points,
+                isCorrect: attempted ? isCorrect : null,
+                attempted: attempted
+            };
+        });
+
+        const cacheData = {
+            examName: document.getElementById('portal-title').innerText,
+            subjects: subjects,
+            qidOrder: allQ.map(q => q.qid),
+            duration: examDuration,
+            totalTimeTaken: Math.round((examDuration * 60) - timeRem),
+            questionData: questionData,
+            summary: summary
+        };
+
+        localStorage.setItem('examResults', JSON.stringify(cacheData));
+
+        displayReport(summary);
+    }
+
+    function displayReport(r) {
+        document.getElementById('portal-view').classList.add('hidden');
+        document.getElementById('report-view').classList.remove('hidden');
+
+        document.getElementById('report-test-name').innerText = document.getElementById('portal-title').innerText;
+        document.getElementById('res-score').innerText = r.totalScore;
+        document.getElementById('res-corr').innerText = r.correct;
+        document.getElementById('res-inc').innerText = r.incorrect;
+        document.getElementById('res-acc').innerText = Math.round((r.correct / (r.correct + r.incorrect || 1)) * 100) + '%';
+
+        const body = document.getElementById('report-table');
+        body.innerHTML = '';
+        Object.keys(r.subWise).forEach(s => {
+            const d = r.subWise[s];
+            body.innerHTML += `
+                <tr class="border-b">
+                    <td class="p-3 border font-bold">${s}</td>
+                    <td class="p-3 border text-center">${d.count}</td>
+                    <td class="p-3 border text-center text-blue-700">${d.att}</td>
+                    <td class="p-3 border text-center text-green-600">${d.corr}</td>
+                    <td class="p-3 border text-center font-black">${d.score}</td>
+                </tr>`;
+        });
+    }
+
+    function showInstruction() {
+        document.getElementById('instruction-view').classList.remove('hidden');
+        document.getElementById('portal-view').classList.add('hidden');
+        document.getElementById('report-view').classList.add('hidden');
+        document.getElementById('analysis-view').classList.add('hidden');
+        document.getElementById('solutions-view').classList.add('hidden');
+        var ap = document.getElementById('admin-panel'); if (ap) ap.classList.add('hidden');
+
+        var totalQ = allQ.length;
+        document.getElementById('inst-test-name').innerText = document.getElementById('portal-title').innerText || 'Examination';
+        document.getElementById('inst-meta').innerText = 'Duration: ' + examDuration + ' minutes | Total Questions: ' + totalQ;
+
+        var subStats = {};
+        subjects.forEach(function(s) { subStats[s] = { total: 0, SCQ: 0, MCQ: 0, NUM: 0 }; });
+        allQ.forEach(function(q) { subStats[q.subject].total++; subStats[q.subject][q.type]++; });
+
+        var container = document.getElementById('inst-subjects');
+        container.innerHTML = '';
+        subjects.forEach(function(s) {
+            var d = subStats[s];
+            container.innerHTML += '<div class="p-4 bg-gray-50 border rounded-lg"><h3 class="font-bold text-[#285c95] text-sm mb-2">' + s + '</h3><p class="text-xs text-gray-600">Total: <span class="font-bold">' + d.total + '</span></p><p class="text-xs text-gray-600">SCQ: ' + d.SCQ + ' | MCQ: ' + d.MCQ + ' | NUM: ' + d.NUM + '</p></div>';
+        });
+
+        var fq = allQ[0];
+        if (fq) {
+            document.getElementById('inst-marking').innerHTML =
+                '<p><span class="font-bold text-green-600">SCQ / NUM:</span> +' + fq.marking.positive + ' for correct, ' + fq.marking.negative + ' for incorrect</p>' +
+                '<p><span class="font-bold text-green-600">MCQ:</span> +' + fq.marking.positive + ' for fully correct, ' + fq.marking.negative + ' for incorrect</p>' +
+                '<p class="text-xs text-gray-400 mt-2">* Partial marking: +1 mark per correctly selected option in MCQ</p>';
+        }
+    }
+
+    function startExam() {
+        document.getElementById('instruction-view').classList.add('hidden');
+        document.getElementById('portal-view').classList.remove('hidden');
+        buildSlabs();
+        loadQ(0);
+        runTimer();
+    }
+
+    function resetExam() {
+        clearInterval(timerInt);
+        localStorage.removeItem('examResults');
+        userResponses = {};
+        timePerQuestion = {};
+        questionStartTime = Date.now();
+        curIdx = 0;
+        activeSub = subjects[0] || '';
+        timeRem = examDuration * 60;
+        allQ.forEach(function(q) {
+            userResponses[q.qid] = { ans: null, status: 'unvisited' };
+            timePerQuestion[q.qid] = 0;
+        });
+        showInstruction();
+    }
+
+    function showAnalysis() {
+        const data = JSON.parse(localStorage.getItem('examResults'));
+        if (!data) { alert('No exam data found.'); return; }
+
+        if (!allQ.length && data.questionData && data.qidOrder) {
+            const qMap = data.questionData;
+            allQ = data.qidOrder.map(qid => qMap[qid].question);
+            subjects = data.subjects || [...new Set(allQ.map(q => q.subject))];
+        }
+
+        document.getElementById('report-view').classList.add('hidden');
+        document.getElementById('solutions-view').classList.add('hidden');
+        document.getElementById('portal-view').classList.add('hidden');
+        var ap = document.getElementById('admin-panel'); if (ap) ap.classList.add('hidden');
+        document.getElementById('analysis-view').classList.remove('hidden');
+
+        const s = data.summary;
+        document.getElementById('analysis-test-name').innerText = data.examName;
+        document.getElementById('an-score').innerText = s.totalScore;
+        document.getElementById('an-corr').innerText = s.correct;
+        document.getElementById('an-inc').innerText = s.incorrect;
+        document.getElementById('an-acc').innerText = Math.round((s.correct / (s.correct + s.incorrect || 1)) * 100) + '%';
+
+        const subBody = document.getElementById('analysis-sub-table');
+        subBody.innerHTML = '';
+        data.subjects.forEach(sub => {
+            const d = s.subWise[sub];
+            const attempted = d.att;
+            const correct = d.corr;
+            const incorrect = attempted - correct;
+            const unattempted = d.count - attempted;
+            const acc = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+            const pct = d.count > 0 ? Math.round((correct / d.count) * 100) : 0;
+            subBody.innerHTML += `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 border font-bold">${sub}</td>
+                    <td class="p-3 border text-center">${d.count}</td>
+                    <td class="p-3 border text-center text-blue-700 font-bold">${attempted}</td>
+                    <td class="p-3 border text-center text-green-600 font-bold">${correct}</td>
+                    <td class="p-3 border text-center text-red-600 font-bold">${incorrect}</td>
+                    <td class="p-3 border text-center text-gray-400">${unattempted}</td>
+                    <td class="p-3 border text-center font-black">${d.score}</td>
+                    <td class="p-3 border text-center font-bold">${acc}%</td>
+                    <td class="p-3 border text-center">
+                        <div class="w-full h-3 bg-gray-200 rounded overflow-hidden">
+                            <div class="h-full bg-green-500 rounded" style="width:${pct}%"></div>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+
+        const qBody = document.getElementById('analysis-q-table');
+        qBody.innerHTML = '';
+        allQ.forEach((q, i) => {
+            const qd = data.questionData[q.qid];
+            const userAns = qd.userResponse !== null && qd.userResponse !== '' ? 
+                (Array.isArray(qd.userResponse) ? qd.userResponse.join(', ') : qd.userResponse) : '—';
+            const correctAns = q.answer;
+            let statusIcon, statusColor;
+            if (!qd.attempted) {
+                statusIcon = '⏭️'; statusColor = 'text-gray-400';
+            } else if (qd.isCorrect) {
+                statusIcon = '✅'; statusColor = 'text-green-600';
+            } else {
+                statusIcon = '❌'; statusColor = 'text-red-600';
+            }
+            const rowClass = !qd.attempted ? 'opacity-60' : (qd.isCorrect ? '' : 'bg-red-50');
+            qBody.innerHTML += `
+                <tr class="border-b hover:bg-gray-50 ${rowClass}">
+                    <td class="p-2 border text-center font-bold">${i + 1}</td>
+                    <td class="p-2 border">${q.subject}</td>
+                    <td class="p-2 border font-bold">${q.type}</td>
+                    <td class="p-2 border font-mono text-sm">${userAns}</td>
+                    <td class="p-2 border font-mono text-sm text-green-700 font-bold">${correctAns}</td>
+                    <td class="p-2 border text-center font-bold ${statusColor}">${statusIcon}</td>
+                    <td class="p-2 border text-center font-black ${qd.marksAwarded > 0 ? 'text-green-600' : qd.marksAwarded < 0 ? 'text-red-600' : 'text-gray-400'}">${qd.marksAwarded > 0 ? '+' : ''}${qd.marksAwarded}</td>
+                    <td class="p-2 border text-center font-bold">${qd.timeTaken}s</td>
+                </tr>`;
+        });
+    }
+
+    let solCurIdx = 0;
+    let solActiveSub = '';
+
+    function showSolutions() {
+        const data = JSON.parse(localStorage.getItem('examResults'));
+        if (!data) { alert('No exam data found.'); return; }
+
+        if (!allQ.length && data.questionData && data.qidOrder) {
+            const qMap = data.questionData;
+            allQ = data.qidOrder.map(qid => qMap[qid].question);
+            subjects = data.subjects || [...new Set(allQ.map(q => q.subject))];
+        }
+
+        document.getElementById('analysis-view').classList.add('hidden');
+        document.getElementById('report-view').classList.add('hidden');
+        document.getElementById('portal-view').classList.add('hidden');
+        var ap = document.getElementById('admin-panel'); if (ap) ap.classList.add('hidden');
+        document.getElementById('solutions-view').classList.remove('hidden');
+
+        document.getElementById('sol-title').innerText = data.examName;
+        document.getElementById('sol-score-display').innerText = `Score: ${data.summary.totalScore}`;
+
+        solActiveSub = data.subjects[0];
+        buildSolSlabs(data);
+        solLoadQ(0, data);
+    }
+
+    function buildSolSlabs(data) {
+        const nav = document.getElementById('sol-slab-nav');
+        nav.innerHTML = '';
+        data.subjects.forEach(s => {
+            const div = document.createElement('div');
+            div.className = `subject-slab ${s === solActiveSub ? 'active' : ''}`;
+            div.innerText = s;
+            div.onclick = () => {
+                solActiveSub = s;
+                buildSolSlabs(data);
+                const firstIdx = allQ.findIndex(q => q.subject === s);
+                if (firstIdx >= 0) solLoadQ(firstIdx, data);
+            };
+            nav.appendChild(div);
+        });
+    }
+
+    function solLoadQ(idx, data) {
+        solCurIdx = idx;
+        const q = allQ[idx];
+        const qd = data.questionData[q.qid];
+
+        document.getElementById('sol-q-num').innerText = `Question No. ${idx + 1}`;
+        document.getElementById('sol-subject-label').innerText = q.subject;
+        document.getElementById('sol-type-badge').innerText = `SECTION: ${q.type}`;
+
+        const imgCont = document.getElementById('sol-image-container');
+        if (q.image) {
+            document.getElementById('sol-image').src = q.image;
+            imgCont.classList.remove('hidden');
+        } else {
+            imgCont.classList.add('hidden');
+        }
+        document.getElementById('sol-text').innerText = q.text || '';
+
+        const resultBadge = document.getElementById('sol-result-badge');
+        if (!qd.attempted) {
+            resultBadge.innerHTML = '● Unattempted';
+            resultBadge.className = 'font-bold text-gray-400';
+        } else if (qd.isCorrect) {
+            resultBadge.innerHTML = '● Correct';
+            resultBadge.className = 'font-bold text-green-600';
+        } else {
+            resultBadge.innerHTML = '● Incorrect';
+            resultBadge.className = 'font-bold text-red-600';
+        }
+
+        const marksEl = document.getElementById('sol-marks-awarded');
+        const marksVal = qd.marksAwarded;
+        marksEl.innerText = (marksVal > 0 ? '+' : '') + marksVal;
+        marksEl.className = `text-lg font-black ${marksVal > 0 ? 'text-green-600' : marksVal < 0 ? 'text-red-600' : 'text-gray-400'}`;
+
+        document.getElementById('sol-time-taken').innerText = qd.timeTaken + 's';
+
+        solRenderOptions(q, qd);
+        solRenderPalette(data);
+    }
+
+    function solRenderOptions(q, qd) {
+        const cont = document.getElementById('sol-options-grid');
+        cont.innerHTML = '';
+        const correctKeys = q.answer.toString().split(',').map(k => k.trim());
+
+        if (q.type === 'NUM') {
+            const div = document.createElement('div');
+            div.className = "bg-gray-50 p-6 border rounded-lg";
+            const userVal = qd.userResponse || '—';
+            const isCorrect = qd.isCorrect;
+            div.innerHTML = `
+                <p class="text-xs font-bold text-gray-500 uppercase mb-4">Your Answer:</p>
+                <div class="flex items-center gap-4">
+                    <span class="p-3 text-xl font-bold border-2 ${isCorrect ? 'border-green-500 bg-green-50' : qd.attempted ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'} rounded w-48">${userVal}</span>
+                    <span class="text-sm font-bold text-green-700">Correct: ${q.answer}</span>
+                </div>
+            `;
+            cont.appendChild(div);
+        } else {
+            [1, 2, 3, 4].forEach(v => {
+                const vStr = v.toString();
+                const isCorrectAnswer = correctKeys.includes(vStr);
+                const userSelected = q.type === 'SCQ' ? (qd.userResponse == v) : (Array.isArray(qd.userResponse) && qd.userResponse.includes(vStr));
+
+                let bgClass = 'bg-white border-gray-200';
+                let iconHtml = `<span class="text-sm text-gray-300 font-bold">${String.fromCharCode(64 + v)}</span>`;
+
+                if (isCorrectAnswer) {
+                    bgClass = 'bg-green-50 border-green-500';
+                    iconHtml = `<span class="flex items-center justify-center w-5 h-5 bg-green-600 text-white text-[10px] rounded-full font-bold">✓</span>`;
+                }
+                if (userSelected && !isCorrectAnswer) {
+                    bgClass = 'bg-red-50 border-red-500';
+                    iconHtml = `<span class="flex items-center justify-center w-5 h-5 bg-red-600 text-white text-[10px] rounded-full font-bold">✗</span>`;
+                }
+                if (userSelected && isCorrectAnswer) {
+                    iconHtml = `<span class="flex items-center justify-center w-5 h-5 bg-green-600 text-white text-[10px] rounded-full font-bold">✓</span>`;
+                }
+
+                const btn = document.createElement('div');
+                btn.className = `flex items-center gap-4 p-3 border rounded ${bgClass}`;
+                btn.innerHTML = `
+                    ${iconHtml}
+                    <span class="text-sm font-bold text-gray-700">Option ${v}</span>
+                `;
+                cont.appendChild(btn);
+            });
+        }
+    }
+
+    function solRenderPalette(data) {
+        const box = document.getElementById('sol-palette-box');
+        box.innerHTML = '';
+
+        const subQs = allQ.map((q, i) => ({...q, globalIdx: i})).filter(q => q.subject === solActiveSub);
+
+        let correctCount = 0, incorrectCount = 0, unattemptedCount = 0;
+
+        ['SCQ', 'MCQ', 'NUM'].forEach(t => {
+            const list = subQs.filter(q => q.type === t);
+            if (!list.length) return;
+
+            const wrap = document.createElement('div');
+            wrap.className = "mb-4";
+            wrap.innerHTML = `<h4 class="text-[9px] font-bold text-gray-400 border-b pb-1 mb-2 uppercase">${t} Section</h4>`;
+            const grid = document.createElement('div');
+            grid.className = "flex flex-wrap";
+
+            list.forEach(q => {
+                const qd = data.questionData[q.qid];
+                let style = '';
+                if (!qd.attempted) { style = 'background:#d1d5db;color:#fff;'; unattemptedCount++; }
+                else if (qd.isCorrect) { style = 'background:#22c55e;color:#fff;'; correctCount++; }
+                else { style = 'background:#ef4444;color:#fff;'; incorrectCount++; }
+
+                const btn = document.createElement('div');
+                btn.className = 'q-btn';
+                btn.style.cssText = style;
+                if (q.globalIdx === solCurIdx) btn.style.border = '2px solid #1e3a8a';
+                btn.innerText = q.globalIdx + 1;
+                btn.onclick = () => solLoadQ(q.globalIdx, data);
+                grid.appendChild(btn);
+            });
+            wrap.appendChild(grid);
+            box.appendChild(wrap);
+        });
+
+        document.getElementById('sol-count-correct').innerText = `Correct (${correctCount})`;
+        document.getElementById('sol-count-incorrect').innerText = `Incorrect (${incorrectCount})`;
+        document.getElementById('sol-count-unattempted').innerText = `Unattempted (${unattemptedCount})`;
+    }
+
+    function solMoveQ(step) {
+        const data = JSON.parse(localStorage.getItem('examResults'));
+        if (!data) return;
+        const target = solCurIdx + step;
+        if (target >= 0 && target < allQ.length) solLoadQ(target, data);
+    }
+
+    function exportStandalone() {
+        const name = document.getElementById('test-name').value;
+        const duration = document.getElementById('test-duration').value;
+        
+        const portalCode = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${name}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>${document.querySelector('style').innerHTML}</style>
+</head>
+<body class="overflow-hidden">
+    ${document.getElementById('instruction-view').outerHTML}
+    ${document.getElementById('portal-view').outerHTML}
+    ${document.getElementById('report-view').outerHTML}
+    ${document.getElementById('analysis-view').outerHTML}
+    ${document.getElementById('solutions-view').outerHTML}
+    ${document.getElementById('submit-modal').outerHTML}
+    <script>
+        allQ = ${JSON.stringify(allQ).replace(/<\//g, '<\\/')};
+        subjects = ${JSON.stringify(subjects)};
+        var curIdx = 0;
+        var activeSub = '';
+        var timeRem = 0;
+        var timerInt = null;
+        var solCurIdx = 0;
+        var solActiveSub = '';
+        var userResponses = {};
+        var timePerQuestion = {};
+        var questionStartTime = Date.now();
+        var examDuration = 0;
+
+        allQ.forEach(function(q) {
+            userResponses[q.qid] = { ans: null, status: 'unvisited' };
+            timePerQuestion[q.qid] = 0;
+        });
+
+        function portalBoot() {
+            var views = ['instruction-view','portal-view','report-view','analysis-view','solutions-view','submit-modal'];
+            views.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            var ap = document.getElementById('admin-panel');
+            if (ap) ap.classList.add('hidden');
+            document.getElementById('portal-title').innerText = "${name}";
+            examDuration = ${duration};
+            timeRem = examDuration * 60;
+            activeSub = subjects[0];
+            showInstruction();
+        }
+
+        ${buildSlabs.toString()}
+        ${loadQ.toString()}
+        ${renderOptions.toString()}
+        ${updateStatusCounts.toString()}
+        ${renderPalette.toString()}
+        ${saveNext.toString()}
+        ${markReview.toString()}
+        ${clearResponse.toString()}
+        ${moveQ.toString()}
+        ${triggerSubmit.toString()}
+        ${closeModal.toString()}
+        ${runTimer.toString()}
+        ${evalExam.toString()}
+        ${displayReport.toString()}
+        ${showAnalysis.toString()}
+        ${showSolutions.toString()}
+        ${buildSolSlabs.toString()}
+        ${solLoadQ.toString()}
+        ${solRenderOptions.toString()}
+        ${solRenderPalette.toString()}
+        ${solMoveQ.toString()}
+        ${downloadResults.toString()}
+        ${showInstruction.toString()}
+        ${startExam.toString()}
+        ${resetExam.toString()}
+        window.onload = portalBoot;
+    <\/script>
+</body>
+</html>`;
+
+        document.getElementById('export-code-box').value = portalCode.trim();
+        document.getElementById('export-modal').classList.remove('hidden');
+    }
+
+    function copyCode() {
+        const box = document.getElementById('export-code-box');
+        box.select();
+        document.execCommand('copy');
+    }
+
+    function downloadResults() {
+        const cached = localStorage.getItem('examResults');
+        const data = cached ? JSON.parse(cached) : { userResponses: userResponses };
+        if (!cached) data.timestamp = new Date().toISOString();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "exam_session_data.json";
+        a.click();
+    }
+</script>
+</body>
+</html>

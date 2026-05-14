@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamFillip Test Builder Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #285c95;
+            --primary-light: #337ab7;
+            --primary-dark: #1a3d63;
+            --accent: #22c55e;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-hover: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: rgba(0,0,0,0.5);
+            --gradient: linear-gradient(135deg, #285c95 0%, #337ab7 50%, #22c55e 100%);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(40, 92, 149, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(34, 197, 94, 0.06) 0%, transparent 50%);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+            animation: fadeSlideUp 0.6s ease-out;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .pipe-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            animation: fadeSlideUp 0.6s ease-out 0.1s both;
+        }
+
+        .pipe-diagram .step {
+            background: var(--card-bg);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .pipe-diagram .step.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .pipe-diagram .arrow {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            animation: fadeSlideUp 0.6s ease-out 0.2s both;
+        }
+
+        .tool-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .tool-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary-light);
+            box-shadow: 0 20px 40px var(--shadow);
+        }
+
+        .tool-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-card h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .tool-card .version {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .tool-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .tool-card .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 1rem 0 1.2rem;
+        }
+
+        .tool-card .tags span {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            background: rgba(51, 122, 183, 0.15);
+            color: var(--primary-light);
+            border: 1px solid rgba(51, 122, 183, 0.2);
+        }
+
+        .tool-card .tags .green {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--accent);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+
+        .tool-card a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            color: white;
+            background: var(--primary);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: auto;
+        }
+
+        .tool-card a:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 92, 149, 0.4);
+        }
+
+        .tool-card .double-link {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: auto;
+        }
+
+        .tool-card .double-link a {
+            flex: 1;
+            font-size: 0.75rem;
+            padding: 0.6rem 0.8rem;
+        }
+
+        .order-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+            animation: fadeSlideUp 0.6s ease-out 0.3s both;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 640px) {
+            h1 { font-size: 2rem; }
+            .container { padding: 1.5rem; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .tool-card .double-link { flex-direction: column; }
+            .pipe-diagram { font-size: 0.65rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="badge">ExamFillip Ecosystem</div>
+        <h1>Test Builder Dashboard</h1>
+        <p>End-to-end pipeline for creating computer-based tests</p>
+    </header>
+
+    <div class="pipe-diagram">
+        <span class="step active">1 VectorSort</span>
+        <span class="arrow">&#8594;</span>
+        <span class="step active">2 Test Data Extractor</span>
+        <span class="arrow">&#8594;</span>
+        <span class="step active">3 Solutions</span>
+        <span class="arrow">&#8594;</span>
+        <span class="step active">4 CBT Generator</span>
+    </div>
+
+    <div class="tools-grid">
+        <div class="tool-card">
+            <div class="order-badge">1</div>
+            <div class="icon">&#128196;</div>
+            <h2>VectorSort</h2>
+            <div class="version">Question Sorting Engine V1.3</div>
+            <p>Upload PDF question papers, crop individual questions, tag with metadata (exam, subject, difficulty, type), and save organized PNGs to your local folder. Generates answer key automatically.</p>
+            <div class="tags">
+                <span>PDF.js</span>
+                <span class="green">File System API</span>
+                <span>Crop</span>
+                <span>Answer Key</span>
+            </div>
+            <a href="https://examfillip.vercel.app/tools/testbuilder/vectorsort/" target="_blank">Launch VectorSort &rarr;</a>
+        </div>
+
+        <div class="tool-card">
+            <div class="order-badge">2</div>
+            <div class="icon">&#128451;</div>
+            <h2>Test Data Extractor</h2>
+            <div class="version">Test Data Extractor V1.1</div>
+            <p>Compile sorted PNG folders and answer key text files into a structured master_db.json. Configurable marking scheme per question type (SCQ, MCQ, NUM).</p>
+            <div class="tags">
+                <span>JSON</span>
+                <span class="green">Answer Key</span>
+                <span>Batch Compile</span>
+                <span>Theme Toggle</span>
+            </div>
+            <a href="https://examfillip.vercel.app/tools/testbuilder/testdataextractor/" target="_blank">Launch Extractor &rarr;</a>
+        </div>
+
+        <div class="tool-card">
+            <div class="order-badge">3</div>
+            <div class="icon">&#128161;</div>
+            <h2>Solutions</h2>
+            <div class="version">AI Solution Generator &amp; SolutionExtractor</div>
+            <p>Generate AI-powered step-by-step solutions for your question bank, or browse and extract existing solutions linked to specific Question IDs (QID).</p>
+            <div class="tags">
+                <span>AI</span>
+                <span class="green">Solutions</span>
+                <span>QID Lookup</span>
+                <span>Extract</span>
+            </div>
+            <div class="double-link">
+                <a href="https://examfillip.vercel.app/tools/testbuilder/solutiongenerator/" target="_blank">Generate Solutions &rarr;</a>
+                <a href="https://examfillip.vercel.app/tools/testbuilder/solutionextractor/" target="_blank">Extract Solutions &rarr;</a>
+            </div>
+        </div>
+
+        <div class="tool-card">
+            <div class="order-badge">4</div>
+            <div class="icon">&#128187;</div>
+            <h2>CBT Generator</h2>
+            <div class="version">CBT Generator V1.1</div>
+            <p>Ingest master_db.json and generate a fully standalone JEE-style exam portal HTML. Features timer, palette navigation, evaluation engine, analysis, and solution viewer.</p>
+            <div class="tags">
+                <span>Standalone HTML</span>
+                <span class="green">JEE-Style UI</span>
+                <span>Evaluation</span>
+                <span>Analysis</span>
+            </div>
+            <a href="https://examfillip.vercel.app/tools/testbuilder/cbtgenerator/" target="_blank">Launch Generator &rarr;</a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2026 ExamFillip. All rights reserved. | Test Builder Dashboard
+</footer>
+
+</body>
+</html>
